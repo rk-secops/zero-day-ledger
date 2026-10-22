@@ -12,6 +12,7 @@ Usage:
 
 import argparse
 import html
+import json
 import re
 import shutil
 import sys
@@ -33,6 +34,12 @@ FEEDS = {
     "SecurityWeek": "https://feeds.feedburner.com/securityweek",
 }
 
+KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+KEV_CATALOG = "https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+KEV_WINDOW_DAYS = 30
+KEV_FRESH_DAYS = 7
+MAX_KEV_BYTES = 20 * 1024 * 1024
+
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "ledger" / "template.html"
 STATIC = ROOT / "static"
@@ -44,6 +51,8 @@ FIRST_EDITION = date(2026, 10, 22)
 ATOM = "{http://www.w3.org/2005/Atom}"
 CONTENT_ENCODED = "{http://purl.org/rss/1.0/modules/content/}encoded"
 TAG_RE = re.compile(r"<[^>]+>")
+CVE_RE = re.compile(r"CVE-\d{4}-\d{4,}")
+CWE_RE = re.compile(r"CWE-(\d+)")
 EPOCH = datetime.min.replace(tzinfo=timezone.utc)
 
 
@@ -53,6 +62,18 @@ class Article:
     url: str
     summary: str
     published: datetime | None
+
+
+@dataclass
+class Kev:
+    cve: str
+    name: str
+    description: str
+    added: date
+    due: date | None
+    ransomware: bool
+    cwes: list[str]
+    advisory: str
 
 
 # --- Parsing -----------------------------------------------------------------
@@ -122,15 +143,77 @@ def parse_feed(xml_bytes):
     return articles
 
 
+def parse_date_only(raw):
+    try:
+        return date.fromisoformat((raw or "").strip())
+    except ValueError:
+        return None
+
+
+def vendor_advisory(notes):
+    """First link in a KEV entry's notes that isn't CISA's or NVD's own."""
+    for part in (notes or "").split(";"):
+        url = safe_url(part)
+        host = urlparse(url).hostname or ""
+        if url and not host.endswith(("cisa.gov", "nvd.nist.gov")):
+            return url
+    return ""
+
+
+def parse_kev(json_bytes):
+    """Parse CISA's Known Exploited Vulnerabilities catalog into Kev entries."""
+    entries = []
+    for v in json.loads(json_bytes).get("vulnerabilities", []):
+        cve = (v.get("cveID") or "").strip()
+        added = parse_date_only(v.get("dateAdded"))
+        if not CVE_RE.fullmatch(cve) or not added:
+            continue
+        entries.append(Kev(
+            cve=cve,
+            name=squash(v.get("vulnerabilityName")) or cve,
+            description=summarize(v.get("shortDescription"), max_len=320),
+            added=added,
+            due=parse_date_only(v.get("dueDate")),
+            ransomware=(v.get("knownRansomwareCampaignUse") or "").strip().lower() == "known",
+            cwes=[c for c in v.get("cwes") or [] if CWE_RE.fullmatch(c)],
+            advisory=vendor_advisory(v.get("notes")),
+        ))
+    return entries
+
+
+def pick_kev(entries, today):
+    """Choose today's CVE and count the catalog's recent additions.
+
+    The pick rotates through what CISA added in the past week, falling back to
+    the past 30 days in a quiet stretch. Rotation is keyed on the date, so a
+    rebuild on the same day prints the same CVE.
+    """
+    recent = [e for e in entries if 0 <= (today - e.added).days <= KEV_WINDOW_DAYS]
+    if not recent:
+        return None, 0
+    fresh = [e for e in recent if (today - e.added).days < KEV_FRESH_DAYS]
+    pool = sorted(fresh or recent, key=lambda e: (e.ransomware, e.added, e.cve), reverse=True)
+    return pool[today.toordinal() % len(pool)], len(recent)
+
+
 # --- Fetching ----------------------------------------------------------------
 
-def fetch(url, timeout=15):
+def fetch(url, timeout=15, max_bytes=MAX_FEED_BYTES):
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
-        body = resp.read(MAX_FEED_BYTES + 1)
-    if len(body) > MAX_FEED_BYTES:
-        raise ValueError("feed is larger than 5 MB")
+        body = resp.read(max_bytes + 1)
+    if len(body) > max_bytes:
+        raise ValueError(f"response is larger than {max_bytes // (1024 * 1024)} MB")
     return body
+
+
+def todays_kev(today, fetcher=fetch):
+    """(Kev, recent count), or (None, 0) if CISA's feed is unavailable."""
+    try:
+        return pick_kev(parse_kev(fetcher(KEV_URL, max_bytes=MAX_KEV_BYTES)), today)
+    except Exception as exc:  # the paper still prints without the bulletin
+        print(f"[warn] CISA KEV: {exc}", file=sys.stderr)
+        return None, 0
 
 
 def gather(feeds, per_wire, fetcher=fetch):
@@ -194,7 +277,51 @@ def render_dispatch(number, source, articles):
     )
 
 
-def render(dispatches, down, built_at):
+def render_kev(kev, recent_count):
+    if kev is None:
+        return ""
+    e = html.escape
+    nvd = f"https://nvd.nist.gov/vuln/detail/{kev.cve}"
+    # (label, value, is_alarming)
+    facts = [("Added to KEV", f"{kev.added:%b %d, %Y}", False)]
+    if kev.due:
+        facts.append(("Federal deadline", f"{kev.due:%b %d, %Y}", False))
+    facts.append(("Ransomware use", "Known" if kev.ransomware else "Not known", kev.ransomware))
+    if kev.cwes:
+        facts.append(("Weakness", ", ".join(kev.cwes), False))
+    alarm_attr = ' class="alarm"'
+    fact_html = "\n".join(
+        f'        <div><dt>{label}</dt><dd{alarm_attr if alarm else ""}>{e(value)}</dd></div>'
+        for label, value, alarm in facts
+    )
+
+    links = [f'<a href="{nvd}" target="_blank" rel="noopener noreferrer">NVD entry</a>']
+    if kev.advisory:
+        links.append(f'<a href="{e(kev.advisory)}" target="_blank" rel="noopener noreferrer">Vendor advisory</a>')
+    links.append(f'<a href="{KEV_CATALOG}" target="_blank" rel="noopener noreferrer">CISA catalog</a>')
+    noun = "vulnerability" if recent_count == 1 else "vulnerabilities"
+
+    return (
+        '    <aside class="bulletin" aria-labelledby="kev-title">\n'
+        '      <div class="dispatch-head">\n'
+        '        <span class="dispatch-label">CVE of the Day</span>\n'
+        '        <span class="bulletin-source">From CISA&rsquo;s Known Exploited Vulnerabilities catalog</span>\n'
+        '      </div>\n'
+        '      <hr class="dispatch-rule">\n'
+        f'      <p class="bulletin-id"><a href="{nvd}" target="_blank" rel="noopener noreferrer">{kev.cve}</a></p>\n'
+        f'      <h2 class="bulletin-title" id="kev-title">{e(kev.name)}</h2>\n'
+        f'      <p class="dek">{e(kev.description)}</p>\n'
+        '      <dl class="bulletin-facts">\n'
+        f'{fact_html}\n'
+        '      </dl>\n'
+        f'      <p class="meta">{" &middot; ".join(links)}</p>\n'
+        f'      <p class="meta">One of {recent_count} {noun} CISA confirmed exploited '
+        f'in the last {KEV_WINDOW_DAYS} days.</p>\n'
+        '    </aside>'
+    )
+
+
+def render(dispatches, down, built_at, kev=None, kev_recent=0):
     total = len(dispatches) + len(down)
     status = f"All {total} wires live" if not down else f"{len(dispatches)} of {total} wires live"
     down_notice = ""
@@ -209,6 +336,7 @@ def render(dispatches, down, built_at):
         wire_count=total,
         wire_status=status,
         down_notice=down_notice,
+        kev=render_kev(kev, kev_recent),
         dispatches="\n".join(render_dispatch(i, s, a) for i, (s, a) in enumerate(dispatches, 1)),
     )
 
@@ -230,9 +358,13 @@ def main():
         print("Every wire is down; not overwriting the last edition.", file=sys.stderr)
         sys.exit(1)
 
-    write_site(render(dispatches, down, datetime.now(timezone.utc)), args.out)
+    built_at = datetime.now(timezone.utc)
+    kev, kev_recent = todays_kev(built_at.date())
+
+    write_site(render(dispatches, down, built_at, kev, kev_recent), args.out)
     stories = sum(len(a) for _, a in dispatches)
-    print(f"Printed {stories} stories from {len(dispatches)} wires to {args.out}", file=sys.stderr)
+    print(f"Printed {stories} stories from {len(dispatches)} wires to {args.out}"
+          f" (CVE of the day: {kev.cve if kev else 'none'})", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -24,6 +24,10 @@ wrangler.jsonc         Cloudflare config: serve dist/ as static assets
   can inject markup. Only `http(s)` links are kept.
 - **Strict CSP.** No inline script or style, so the Content-Security-Policy in
   `static/_headers` can be `script-src 'self'`.
+- **CVE of the Day.** A boxed bulletin from CISA's Known Exploited
+  Vulnerabilities catalog. It rotates daily through the past week's
+  additions (past 30 days if CISA has been quiet); if the feed is down the
+  bulletin is simply left out.
 - **Fails safe.** A dead wire is skipped and noted in the colophon. If every
   wire is down, the build fails and the last edition stays live.
 - **Standard library only.** Python 3.11+, nothing to install.

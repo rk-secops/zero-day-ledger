@@ -1,8 +1,9 @@
 """Offline tests for ledger/build.py. Run: python3 -m unittest discover -s tests"""
 
+import json
 import sys
 import unittest
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "ledger"))
@@ -68,6 +69,73 @@ class GatherTests(unittest.TestCase):
     def test_per_wire_limit(self):
         dispatches, _ = build.gather({"R": "rss"}, 1, self.fetcher)
         self.assertEqual(len(dispatches[0][1]), 1)
+
+
+KEV = json.dumps({"vulnerabilities": [
+    {"cveID": "CVE-2026-0001", "vulnerabilityName": "Old Thing RCE", "dateAdded": "2026-09-01",
+     "shortDescription": "Ancient.", "dueDate": "2026-09-22", "knownRansomwareCampaignUse": "Unknown",
+     "notes": "https://nvd.nist.gov/vuln/detail/CVE-2026-0001", "cwes": []},
+    {"cveID": "CVE-2026-1111", "vulnerabilityName": "Widget <b>Auth</b> Bypass", "dateAdded": "2026-10-15",
+     "shortDescription": "Bypass.", "dueDate": "2026-11-05", "knownRansomwareCampaignUse": "Unknown",
+     "notes": " ; https://www.cisa.gov/bod ; https://vendor.example/advisory-1 ; https://nvd.nist.gov/x",
+     "cwes": ["CWE-287", "not-a-cwe"]},
+    {"cveID": "CVE-2026-2222", "vulnerabilityName": "Gadget SQLi", "dateAdded": "2026-10-21",
+     "shortDescription": "SQL injection.", "dueDate": "2026-11-11", "knownRansomwareCampaignUse": "Known",
+     "notes": "javascript:alert(1)", "cwes": ["CWE-89"]},
+    {"cveID": "CVE-2026-3333", "vulnerabilityName": "Gizmo XSS", "dateAdded": "2026-10-21",
+     "shortDescription": "XSS.", "dueDate": "", "knownRansomwareCampaignUse": "Unknown", "notes": "", "cwes": []},
+    {"cveID": "<script>", "vulnerabilityName": "Bogus", "dateAdded": "2026-10-21"},
+    {"cveID": "CVE-2026-4444", "vulnerabilityName": "No date", "dateAdded": "soon"},
+]}).encode()
+
+
+class KevTests(unittest.TestCase):
+    def setUp(self):
+        self.entries = {e.cve: e for e in build.parse_kev(KEV)}
+
+    def test_parse_skips_bad_ids_and_dates(self):
+        self.assertEqual(sorted(self.entries), ["CVE-2026-0001", "CVE-2026-1111", "CVE-2026-2222", "CVE-2026-3333"])
+
+    def test_parse_fields(self):
+        widget = self.entries["CVE-2026-1111"]
+        self.assertEqual(widget.advisory, "https://vendor.example/advisory-1")
+        self.assertEqual(widget.cwes, ["CWE-287"])
+        self.assertFalse(widget.ransomware)
+        self.assertTrue(self.entries["CVE-2026-2222"].ransomware)
+        self.assertEqual(self.entries["CVE-2026-2222"].advisory, "")
+        self.assertIsNone(self.entries["CVE-2026-3333"].due)
+
+    def test_fresh_additions_win_and_rotate_daily(self):
+        entries = list(self.entries.values())
+        day1, recent = build.pick_kev(entries, date(2026, 10, 22))
+        day2, _ = build.pick_kev(entries, date(2026, 10, 23))
+        self.assertIn(day1.cve, {"CVE-2026-2222", "CVE-2026-3333"})
+        self.assertIn(day2.cve, {"CVE-2026-2222", "CVE-2026-3333"})
+        self.assertNotEqual(day1.cve, day2.cve)
+        self.assertEqual(recent, 3)  # Sep 1 is outside the 30-day window
+
+    def test_quiet_days_rotate_through_recent(self):
+        entries = list(self.entries.values())
+        seen = {build.pick_kev(entries, date(2026, 11, 1) + timedelta(days=i))[0].cve for i in range(6)}
+        self.assertEqual(seen, {"CVE-2026-1111", "CVE-2026-2222", "CVE-2026-3333"})
+
+    def test_empty_window(self):
+        self.assertEqual(build.pick_kev(list(self.entries.values()), date(2027, 6, 1)), (None, 0))
+
+    def test_feed_outage_is_not_fatal(self):
+        def broken(url, **kwargs):
+            raise OSError("timed out")
+        self.assertEqual(build.todays_kev(date(2026, 10, 22), broken), (None, 0))
+
+    def test_render_bulletin(self):
+        html_out = build.render_kev(self.entries["CVE-2026-1111"], 3)
+        self.assertIn('href="https://nvd.nist.gov/vuln/detail/CVE-2026-1111"', html_out)
+        self.assertIn("Widget &lt;b&gt;Auth&lt;/b&gt; Bypass", html_out)
+        self.assertIn("https://vendor.example/advisory-1", html_out)
+        self.assertIn("One of 3 vulnerabilities", html_out)
+        self.assertNotIn('class="alarm"', html_out)
+        self.assertIn('class="alarm">Known', build.render_kev(self.entries["CVE-2026-2222"], 1))
+        self.assertEqual(build.render_kev(None, 0), "")
 
 
 class RenderTests(unittest.TestCase):

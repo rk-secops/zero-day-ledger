@@ -78,6 +78,7 @@ body {
   text-transform: uppercase;
   text-wrap: balance;
 }
+.nowrap { white-space: nowrap; }
 .subhead { font-style: italic; font-size: 0.85rem; color: var(--ink-soft); margin: 10px 0 0; }
 .masthead-rule { border: none; border-top: 3px double var(--ink); margin: 16px 0 6px; }
 .dateline {
@@ -117,6 +118,35 @@ body {
   animation: blink 0.8s steps(1) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
+
+/* CVE of the Day: a boxed bulletin above the dispatches */
+.bulletin {
+  margin-top: 28px;
+  padding: 16px 18px 14px;
+  border: 1px solid var(--ink);
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
+}
+.bulletin .dispatch-head { flex-wrap: wrap; }
+.bulletin-source { font-size: 0.72rem; font-style: italic; color: var(--ink-soft); }
+.bulletin-id { margin: 0; font-family: var(--font-display); font-size: clamp(1.5rem, 6vw, 2rem); line-height: 1.1; }
+.bulletin-id a { color: var(--ribbon); text-decoration: none; overflow-wrap: anywhere; }
+.bulletin-id a:hover, .bulletin-id a:focus-visible { text-decoration: underline; }
+.bulletin-title {
+  margin: 6px 0 8px; font-family: var(--font-display); font-weight: normal;
+  font-size: 1.05rem; line-height: 1.35; text-wrap: balance;
+}
+.bulletin-facts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px 16px; margin: 12px 0; padding: 10px 0;
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+}
+.bulletin-facts dt { font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.bulletin-facts dd { margin: 2px 0 0; font-size: 0.86rem; font-weight: 700; }
+.bulletin-facts dd.alarm { color: var(--ribbon); }
+.bulletin .meta + .meta { margin-top: 4px; }
+.meta a { color: var(--ink-soft); }
+.meta a:hover, .meta a:focus-visible { color: var(--ribbon); }
 
 .dek { margin: 0 0 6px; font-size: 0.86rem; line-height: 1.55; max-width: 65ch; }
 .meta { margin: 0; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
