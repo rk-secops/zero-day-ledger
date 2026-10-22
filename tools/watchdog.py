@@ -54,6 +54,7 @@ def get(url, follow_redirects=True):
 
 def cert_expiry(host):
     ctx = ssl.create_default_context()
+    ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     with socket.create_connection((host, 443), timeout=20) as sock:
         with ctx.wrap_socket(sock, server_hostname=host) as tls:
             not_after = tls.getpeercert()["notAfter"]
