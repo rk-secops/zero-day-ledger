@@ -1,0 +1,2 @@
+# Only needed for the Claude story summaries (ledger/summarize.py).
+anthropic==2.1.0

@@ -3,11 +3,13 @@
 Build The Zero-Day Ledger: pull the latest stories from a handful of
 cybersecurity news feeds and render them into a static site in dist/.
 
-Standard library only (Python 3.11+).
+Standard library only (Python 3.11+), except the anthropic SDK that
+summarize.py loads when it writes story summaries.
 
 Usage:
     python3 ledger/build.py              # 4 stories per wire -> dist/
     python3 ledger/build.py -n 3         # 3 stories per wire
+    python3 ledger/build.py --no-summaries   # feed blurbs, no Claude calls
 """
 
 import argparse
@@ -25,6 +27,8 @@ from pathlib import Path
 from string import Template
 from urllib.parse import urlparse
 from xml.etree import ElementTree as ET
+
+import summarize as ai
 
 FEEDS = {
     "Krebs on Security": "https://krebsonsecurity.com/feed/",
@@ -62,6 +66,8 @@ class Article:
     url: str
     summary: str
     published: datetime | None
+    body: str = ""        # full plain text the feed carries, used as summary source
+    ai_summary: str = ""  # Claude's summary, when there is one
 
 
 @dataclass
@@ -89,6 +95,10 @@ def summarize(raw, max_len=220):
     if len(text) > max_len:
         text = text[:max_len].rsplit(" ", 1)[0] + "…"
     return text
+
+
+def plain_text(raw):
+    return squash(TAG_RE.sub(" ", raw or ""))
 
 
 def safe_url(raw):
@@ -123,6 +133,7 @@ def parse_feed(xml_bytes):
             url=safe_url(item.findtext("link")),
             summary=summarize(item.findtext("description") or item.findtext(CONTENT_ENCODED)),
             published=parse_date(item.findtext("pubDate")),
+            body=plain_text(item.findtext(CONTENT_ENCODED) or item.findtext("description")),
         ))
 
     for entry in root.iter(f"{ATOM}entry"):
@@ -136,6 +147,7 @@ def parse_feed(xml_bytes):
             url=safe_url(link),
             summary=summarize(entry.findtext(f"{ATOM}summary") or entry.findtext(f"{ATOM}content")),
             published=parse_date(entry.findtext(f"{ATOM}published") or entry.findtext(f"{ATOM}updated")),
+            body=plain_text(entry.findtext(f"{ATOM}content") or entry.findtext(f"{ATOM}summary")),
         ))
 
     articles = [a for a in articles if a.title and a.url]
@@ -254,8 +266,9 @@ def render_article(article):
         f'        <h3 class="headline"><a href="{e(article.url)}" target="_blank" '
         f'rel="noopener noreferrer">{e(article.title)}</a></h3>',
     ]
-    if article.summary:
-        lines.append(f'        <p class="dek">{e(article.summary)}</p>')
+    dek = article.ai_summary or article.summary
+    if dek:
+        lines.append(f'        <p class="dek">{e(dek)}</p>')
     if article.published:
         lines.append(f'        <p class="meta"><time datetime="{article.published.isoformat()}">'
                      f'{article.published:%b %d, %Y}</time></p>')
@@ -327,6 +340,10 @@ def render(dispatches, down, built_at, kev=None, kev_recent=0):
     down_notice = ""
     if down:
         down_notice = f'<p class="down">No word this morning from {html.escape(", ".join(down))}.</p>'
+    summary_note = ""
+    if any(a.ai_summary for _, articles in dispatches for a in articles):
+        summary_note = (f'<p>Story summaries written by {ai.MODEL_NAME} from each article.<br>'
+                        'Follow the headline for the full report.</p>')
 
     return Template(TEMPLATE.read_text(encoding="utf-8")).substitute(
         issue=max(1, (built_at.date() - FIRST_EDITION).days + 1),
@@ -336,20 +353,23 @@ def render(dispatches, down, built_at, kev=None, kev_recent=0):
         wire_count=total,
         wire_status=status,
         down_notice=down_notice,
+        summary_note=summary_note,
         kev=render_kev(kev, kev_recent),
         dispatches="\n".join(render_dispatch(i, s, a) for i, (s, a) in enumerate(dispatches, 1)),
     )
 
 
-def write_site(page, out_dir):
+def write_site(page, summaries_json, out_dir):
     shutil.copytree(STATIC, out_dir, dirs_exist_ok=True)
     (out_dir / "index.html").write_text(page, encoding="utf-8")
+    (out_dir / "summaries.json").write_text(summaries_json, encoding="utf-8")
 
 
 def main():
     ap = argparse.ArgumentParser(description="Build The Zero-Day Ledger.")
     ap.add_argument("-n", "--per-wire", type=int, default=4, help="stories per wire (default 4)")
     ap.add_argument("-o", "--out", type=Path, default=ROOT / "dist", help="output folder (default dist/)")
+    ap.add_argument("--no-summaries", action="store_true", help="skip Claude summaries, keep feed blurbs")
     args = ap.parse_args()
 
     print("Pulling the wires...", file=sys.stderr)
@@ -361,10 +381,19 @@ def main():
     built_at = datetime.now(timezone.utc)
     kev, kev_recent = todays_kev(built_at.date())
 
-    write_site(render(dispatches, down, built_at, kev, kev_recent), args.out)
+    reused = written = 0
+    if not args.no_summaries:
+        writer = ai.make_writer()
+        if writer is None:
+            print("No ANTHROPIC_API_KEY: reusing published summaries only.", file=sys.stderr)
+        reused, written = ai.add_summaries(dispatches, writer, fetch, ai.load_cache(fetch))
+
+    page = render(dispatches, down, built_at, kev, kev_recent)
+    write_site(page, ai.cache_document(dispatches), args.out)
     stories = sum(len(a) for _, a in dispatches)
     print(f"Printed {stories} stories from {len(dispatches)} wires to {args.out}"
-          f" (CVE of the day: {kev.cve if kev else 'none'})", file=sys.stderr)
+          f" (CVE of the day: {kev.cve if kev else 'none'};"
+          f" summaries: {written} new, {reused} reused)", file=sys.stderr)
 
 
 if __name__ == "__main__":
