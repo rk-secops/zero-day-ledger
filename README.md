@@ -91,3 +91,9 @@ You can also deploy by hand: `python3 ledger/build.py && npx wrangler deploy`.
 
 Change the time with the `cron:` line in `.github/workflows/press.yml`, and the
 wires with `FEEDS` in `ledger/build.py`.
+
+## License
+
+Code: MIT (see `LICENSE`). The fonts in `static/fonts/` keep their own
+licenses (Courier Prime: SIL OFL 1.1; Special Elite: Apache 2.0), and
+headlines and linked articles belong to their publishers.

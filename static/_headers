@@ -6,7 +6,7 @@
   Strict-Transport-Security: max-age=31536000; includeSubDomains
 
 /
-  Cache-Control: public, max-age=300
+  Cache-Control: public, max-age=300, no-transform
 
 /index.html
-  Cache-Control: public, max-age=300
+  Cache-Control: public, max-age=300, no-transform
