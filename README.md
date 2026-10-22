@@ -47,6 +47,8 @@ wrangler.jsonc         Cloudflare config: serve dist/ as static assets
   `anthropic` SDK only for summaries. `requirements.txt` pins every package
   by hash and CI installs with `--require-hashes`; regenerate it from
   `requirements.in` with `pip-compile --generate-hashes --strip-extras requirements.in`.
+- **Signed history.** Commits to `main` must be signed (SSH signing key) and
+  can't be force-pushed or deleted; GitHub shows each one as Verified.
 - **Watched, not just hardened.** A Watchdog workflow checks the live site
   every 6 hours (security headers vs `static/_headers`, injected scripts,
   stale edition, HTTPS redirect, certificate and security.txt expiry) and
