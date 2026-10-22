@@ -1,0 +1,27 @@
+name: Keep alive
+
+# GitHub disables scheduled workflows in public repos after 60 days without
+# commits, and that would stop the daily edition and the watchdog together,
+# silently. Re-enabling them through the API each month resets the timer
+# without a dummy commit. This job can manage Actions and nothing else.
+on:
+  schedule:
+    - cron: "23 9 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  actions: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-enable scheduled workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          for wf in press.yml watchdog.yml scorecard.yml keepalive.yml; do
+            gh api -X PUT "repos/$REPO/actions/workflows/$wf/enable"
+            echo "re-enabled $wf"
+          done
