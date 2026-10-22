@@ -30,6 +30,9 @@ wrangler.jsonc         Cloudflare config: serve dist/ as static assets
   bulletin is simply left out.
 - **Fails safe.** A dead wire is skipped and noted in the colophon. If every
   wire is down, the build fails and the last edition stays live.
+- **No third parties at runtime.** Fonts are self-hosted from `static/fonts/`
+  (Courier Prime: SIL OFL 1.1; Special Elite: Apache 2.0; licenses included),
+  so visitors' browsers only ever talk to this domain.
 - **Standard library only.** Python 3.11+, nothing to install.
 
 ## Local preview
