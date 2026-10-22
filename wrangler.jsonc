@@ -1,0 +1,13 @@
+// Cloudflare Workers static assets: serves dist/ (built by ledger/build.py).
+// No Worker script; _headers in dist/ sets the security headers.
+{
+  "name": "zero-day-ledger",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist"
+  },
+  // Attached on every deploy; Cloudflare creates the DNS record and certificate.
+  "routes": [
+    { "pattern": "thezerodayledger.com", "custom_domain": true }
+  ]
+}

@@ -1,0 +1,131 @@
+/* A single newsroom column on a typewritten sheet: masthead up top,
+   one "dispatch" per news wire stacked beneath it. */
+:root {
+  --paper: #efe6d1;
+  --ink: #2a2420;
+  --ink-soft: #5c5244;
+  --ribbon: #9c2b22;
+  --rule: #c9bb9e;
+  --grain-blend: multiply;
+  --grain-opacity: 0.05;
+
+  --font-display: 'Special Elite', 'Courier New', monospace;
+  --font-mono: 'Courier Prime', 'Courier New', monospace;
+
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #221d17;
+    --ink: #e9dec0;
+    --ink-soft: #b4a688;
+    --ribbon: #d9655a;
+    --rule: #4a4034;
+    --grain-blend: overlay;
+    --grain-opacity: 0.08;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #221d17;
+  --ink: #e9dec0;
+  --ink-soft: #b4a688;
+  --ribbon: #d9655a;
+  --rule: #4a4034;
+  --grain-blend: overlay;
+  --grain-opacity: 0.08;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  padding: 28px max(16px, env(safe-area-inset-right)) 64px max(16px, env(safe-area-inset-left));
+}
+
+#grain {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: var(--grain-blend);
+  opacity: var(--grain-opacity);
+  z-index: 0;
+}
+
+.sheet {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* Masthead */
+.masthead { text-align: center; padding-bottom: 18px; }
+.kicker {
+  font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--ink-soft); margin: 0 0 10px;
+}
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 9vw, 3.2rem);
+  font-weight: normal;
+  line-height: 1.05; letter-spacing: 0.01em; margin: 0;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.subhead { font-style: italic; font-size: 0.85rem; color: var(--ink-soft); margin: 10px 0 0; }
+.masthead-rule { border: none; border-top: 3px double var(--ink); margin: 16px 0 6px; }
+.dateline {
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+  font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-soft); border-bottom: 1px solid var(--rule); padding-bottom: 10px;
+}
+
+/* Dispatches */
+.dispatch { margin-top: 36px; }
+.dispatch-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+.dispatch-label {
+  font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--paper); background: var(--ribbon); padding: 3px 8px; white-space: nowrap;
+}
+.dispatch-source { font-family: var(--font-display); font-size: 1.05rem; font-weight: normal; margin: 0; }
+.dispatch-rule { border: none; border-top: 1px solid var(--rule); margin: 8px 0 16px; }
+
+.article { margin-bottom: 22px; min-width: 0; }
+.article:last-child { margin-bottom: 0; }
+.headline {
+  margin: 0 0 6px; font-family: var(--font-display); font-weight: normal;
+  font-size: 1.05rem; line-height: 1.35; text-wrap: balance; overflow-wrap: anywhere;
+}
+.headline a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+.headline a:hover, .headline a:focus-visible { color: var(--ribbon); border-bottom-color: var(--ribbon); }
+.headline a:focus-visible { outline: 2px solid var(--ribbon); outline-offset: 3px; }
+
+/* Typewriter effect (typewriter.js). Untyped letters keep their space so
+   lines don't reflow while typing; the cursor takes up no width. */
+.untyped { visibility: hidden; }
+.cursor {
+  display: inline-block;
+  width: 0.5em; height: 1em; margin-right: -0.5em;
+  vertical-align: -0.12em;
+  background: var(--ribbon);
+  animation: blink 0.8s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.dek { margin: 0 0 6px; font-size: 0.86rem; line-height: 1.55; max-width: 65ch; }
+.meta { margin: 0; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+
+/* Colophon */
+.colophon {
+  margin-top: 44px; padding-top: 16px; border-top: 3px double var(--ink);
+  text-align: center; font-size: 0.7rem; letter-spacing: 0.06em;
+  color: var(--ink-soft); line-height: 1.8;
+}
+.colophon .down { font-style: italic; }
+.colophon .stamp { font-family: var(--font-display); color: var(--ribbon); }
