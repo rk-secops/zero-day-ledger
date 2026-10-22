@@ -1,5 +1,7 @@
 # The Zero-Day Ledger
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/DtAZestie/zero-day-ledger/badge)](https://scorecard.dev/viewer/?uri=github.com/DtAZestie/zero-day-ledger)
+
 A daily cybersecurity front page, set in type. Every morning a GitHub Action pulls the
 latest stories from five news wires (Krebs on Security, The Hacker News,
 BleepingComputer, Dark Reading, SecurityWeek), renders them into a static
@@ -12,6 +14,7 @@ ledger/build.py       fetch feeds -> parse -> render -> dist/
 ledger/template.html  page skeleton ($placeholders filled by build.py)
 static/                copied into dist/ as-is: CSS, typewriter JS, favicon,
                        _headers (security headers + caching)
+tools/watchdog.py      checks the live site matches what this repo deploys
 tests/                 offline unit tests (no network)
 wrangler.jsonc         Cloudflare config: serve dist/ as static assets
 .github/workflows/     test, then build and deploy on a daily schedule
@@ -41,7 +44,14 @@ wrangler.jsonc         Cloudflare config: serve dist/ as static assets
   prompt, and the output is escaped and length-capped. No API key, no credit,
   or a failed call: the story keeps its feed blurb.
 - **Nearly dependency-free.** Python 3.11+ standard library, plus the
-  `anthropic` SDK (pinned in `requirements.txt`) only for summaries.
+  `anthropic` SDK only for summaries. `requirements.txt` pins every package
+  by hash and CI installs with `--require-hashes`; regenerate it from
+  `requirements.in` with `pip-compile --generate-hashes --strip-extras requirements.in`.
+- **Watched, not just hardened.** A Watchdog workflow checks the live site
+  every 6 hours (security headers vs `static/_headers`, injected scripts,
+  stale edition, HTTPS redirect, certificate and security.txt expiry) and
+  fails loudly. Build trouble (a dead wire, a rejected API key) shows up as
+  warnings on the Press run. CodeQL and OpenSSF Scorecard scan the repo.
 
 ## Local preview
 

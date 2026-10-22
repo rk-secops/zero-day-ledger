@@ -1,0 +1,3 @@
+# Direct dependencies. requirements.txt is generated from this file:
+#   pip-compile --generate-hashes --strip-extras requirements.in
+anthropic==2.1.0

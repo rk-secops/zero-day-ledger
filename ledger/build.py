@@ -29,6 +29,7 @@ from urllib.parse import urlparse
 from xml.etree import ElementTree as ET
 
 import summarize as ai
+from log import alert, summary
 
 FEEDS = {
     "Krebs on Security": "https://krebsonsecurity.com/feed/",
@@ -224,7 +225,7 @@ def todays_kev(today, fetcher=fetch):
     try:
         return pick_kev(parse_kev(fetcher(KEV_URL, max_bytes=MAX_KEV_BYTES)), today)
     except Exception as exc:  # the paper still prints without the bulletin
-        print(f"[warn] CISA KEV: {exc}", file=sys.stderr)
+        alert(f"CISA KEV feed unavailable ({exc}); printing without CVE of the Day.")
         return None, 0
 
 
@@ -244,12 +245,12 @@ def gather(feeds, per_wire, fetcher=fetch):
         try:
             articles = future.result()
         except Exception as exc:  # one dead wire shouldn't stop the press
-            print(f"[warn] {name}: {exc}", file=sys.stderr)
+            alert(f"Wire down: {name} ({exc})")
             down.append(name)
             continue
         fresh = [a for a in articles if a.url not in seen][:per_wire]
         if not fresh:
-            print(f"[warn] {name}: no usable stories", file=sys.stderr)
+            alert(f"Wire down: {name} returned no usable stories")
             down.append(name)
             continue
         seen.update(a.url for a in fresh)
@@ -375,7 +376,7 @@ def main():
     print("Pulling the wires...", file=sys.stderr)
     dispatches, down = gather(FEEDS, args.per_wire)
     if not dispatches:
-        print("Every wire is down; not overwriting the last edition.", file=sys.stderr)
+        alert("Every wire is down; not overwriting the last edition.")
         sys.exit(1)
 
     built_at = datetime.now(timezone.utc)
@@ -385,7 +386,7 @@ def main():
     if not args.no_summaries:
         writer = ai.make_writer()
         if writer is None:
-            print("No ANTHROPIC_API_KEY: reusing published summaries only.", file=sys.stderr)
+            alert("No ANTHROPIC_API_KEY: reusing published summaries only.")
         reused, written = ai.add_summaries(dispatches, writer, fetch, ai.load_cache(fetch))
 
     page = render(dispatches, down, built_at, kev, kev_recent)
@@ -394,6 +395,11 @@ def main():
     print(f"Printed {stories} stories from {len(dispatches)} wires to {args.out}"
           f" (CVE of the day: {kev.cve if kev else 'none'};"
           f" summaries: {written} new, {reused} reused)", file=sys.stderr)
+    summary(f"### Edition No. {max(1, (built_at.date() - FIRST_EDITION).days + 1)}\n"
+            f"- {stories} stories from {len(dispatches)} of {len(FEEDS)} wires\n"
+            f"- CVE of the Day: {kev.cve if kev else 'none'}\n"
+            f"- Summaries: {written} new, {reused} reused, "
+            f"{stories - written - reused} on feed blurbs")
 
 
 if __name__ == "__main__":
