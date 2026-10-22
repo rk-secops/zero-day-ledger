@@ -6,7 +6,7 @@ CISA's KEV catalog, served from Cloudflare at https://thezerodayledger.com.
 ## Reporting a vulnerability
 
 Please report security issues privately through GitHub:
-**[Report a vulnerability](https://github.com/DtAZestie/zero-day-ledger/security/advisories/new)**.
+**[Report a vulnerability](https://github.com/rk-secops/zero-day-ledger/security/advisories/new)**.
 Don't open a public issue for anything exploitable.
 
 In scope: the site and its HTTP headers, the build and deploy pipeline in

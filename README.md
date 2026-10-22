@@ -1,6 +1,6 @@
 # The Zero-Day Ledger
 
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/DtAZestie/zero-day-ledger/badge)](https://scorecard.dev/viewer/?uri=github.com/DtAZestie/zero-day-ledger)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rk-secops/zero-day-ledger/badge)](https://scorecard.dev/viewer/?uri=github.com/rk-secops/zero-day-ledger)
 
 A daily cybersecurity front page, set in type. Every morning a GitHub Action pulls the
 latest stories from five news wires (Krebs on Security, The Hacker News,

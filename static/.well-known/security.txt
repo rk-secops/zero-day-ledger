@@ -1,7 +1,7 @@
 # Security contact for The Zero-Day Ledger (RFC 9116).
 # Reports go to GitHub's private vulnerability reporting form.
-Contact: https://github.com/DtAZestie/zero-day-ledger/security/advisories/new
-Policy: https://github.com/DtAZestie/zero-day-ledger/security/policy
+Contact: https://github.com/rk-secops/zero-day-ledger/security/advisories/new
+Policy: https://github.com/rk-secops/zero-day-ledger/security/policy
 Preferred-Languages: en
 Canonical: https://thezerodayledger.com/.well-known/security.txt
 Expires: 2027-10-22T00:00:00Z
