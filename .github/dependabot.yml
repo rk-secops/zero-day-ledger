@@ -1,4 +1,4 @@
-# Weekly PRs to bump the pinned action SHAs in .github/workflows/.
+# Weekly PRs to bump the pinned action SHAs and the anthropic SDK.
 # (wranglerVersion in press.yml is an npm version string; bump it by hand.)
 version: 2
 updates:
@@ -9,3 +9,7 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
