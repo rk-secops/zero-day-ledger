@@ -9,6 +9,14 @@ To get notified of new versions, watch this repository and choose
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.1] - 2026-10-23
+
+### Fixed
+- Weekly roundups and digests no longer collect every label that applies to
+  one of their items; they now get none.
+- Changing the summary prompt now rewrites the summaries already on the page
+  instead of leaving them in the old style until they age out.
+
 ## [1.3.0] - 2026-10-23
 
 ### Added
@@ -80,6 +88,7 @@ First edition.
 - DNSSEC, HTTPS everywhere, and a null mail setup so the domain can't be used
   to send spoofed email.
 
+[1.3.1]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/rk-secops/zero-day-ledger/compare/v1.1.0...v1.1.1

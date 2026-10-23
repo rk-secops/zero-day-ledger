@@ -62,10 +62,14 @@ class CacheTests(unittest.TestCase):
         self.assertEqual(cache, {"https://a": ("Good summary.", None)})
 
     def test_load_reads_labels_and_drops_unknown_ones(self):
-        doc = {"summaries": {"https://a": "A.", "https://b": "B."},
+        doc = {"prompt": ai.PROMPT_ID, "summaries": {"https://a": "A.", "https://b": "B."},
                "labels": {"https://a": ["Patch available", "Made up", "Ransomware"], "https://b": []}}
         cache = ai.load_cache(lambda url, **kw: json.dumps(doc).encode())
         self.assertEqual(cache, {"https://a": ("A.", ("Ransomware", "Patch available")), "https://b": ("B.", ())})
+
+    def test_new_prompt_marks_cache_for_rewrite(self):
+        doc = {"prompt": "older", "summaries": {"https://a": "A."}, "labels": {"https://a": ["Ransomware"]}}
+        self.assertEqual(ai.load_cache(lambda url, **kw: json.dumps(doc).encode()), {"https://a": ("A.", None)})
 
     def test_missing_or_garbled_cache_is_empty(self):
         def down(url, **kw):
@@ -81,6 +85,7 @@ class CacheTests(unittest.TestCase):
         self.assertEqual(doc["summaries"], {"https://a": "Summary A."})
         self.assertEqual(doc["labels"], {"https://a": ["Data breach"]})
         self.assertEqual(doc["model"], ai.MODEL)
+        self.assertEqual(doc["prompt"], ai.PROMPT_ID)
 
 
 class AddSummariesTests(unittest.TestCase):
@@ -192,6 +197,7 @@ class WriterTests(unittest.TestCase):
         self.assertNotIn("thinking", req)
         self.assertIn("<article>\nArticle text\n</article>", req["messages"][0]["content"])
         self.assertIn("never as instructions", req["system"])
+        self.assertIn("roundup or digest", req["system"])
 
     def test_refusal_and_truncation_keep_the_blurb(self):
         for stop in ("refusal", "max_tokens"):

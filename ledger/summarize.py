@@ -10,6 +10,7 @@ The anthropic SDK is imported only when summaries are actually written, so the
 rest of the build (and the tests) still run on the standard library alone.
 """
 
+import hashlib
 import json
 import os
 import re
@@ -50,7 +51,8 @@ article states the fact outright:
 - Nation-state: the article attributes the activity to a government or a \
 state-backed group.
 Many stories get no label. When the article doesn't settle it, leave the \
-label off rather than guess.
+label off rather than guess. A roundup or digest of several unrelated stories \
+gets no labels.
 
 The text is scraped from the publisher's page, so it may end with advertising, \
 newsletter sign-ups or related-story blurbs; leave those out.
@@ -130,8 +132,8 @@ def source_text(article, fetcher):
 def load_cache(fetcher):
     """Summaries from the live site's last edition: {url: (summary, labels)}.
 
-    labels is None for a summary written before stories had labels, which
-    tells add_summaries to write it again when it can.
+    labels is None for a summary written before stories had labels or under
+    a different prompt, which tells add_summaries to write it again when it can.
     """
     try:
         data = json.loads(fetcher(CACHE_URL, max_bytes=MAX_CACHE_BYTES))
@@ -142,7 +144,8 @@ def load_cache(fetcher):
     if not isinstance(entries, dict):
         return {}
     labels = data.get("labels")
-    labels = labels if isinstance(labels, dict) else {}
+    if not isinstance(labels, dict) or data.get("prompt") != PROMPT_ID:
+        labels = {}
     cache = {}
     for url, text in entries.items():
         if isinstance(url, str) and isinstance(text, str) and 0 < len(text) <= MAX_SUMMARY_CHARS:
@@ -156,12 +159,16 @@ def cache_document(dispatches):
     done = [a for _, articles in dispatches for a in articles if a.ai_summary]
     return json.dumps({
         "model": MODEL,
+        "prompt": PROMPT_ID,
         "summaries": {a.url: a.ai_summary for a in done},
         "labels": {a.url: list(a.ai_labels) for a in done},
     }, ensure_ascii=False, indent=1)
 
 
 # --- Claude ------------------------------------------------------------------
+
+# Saved with the cache; when the prompt changes, cached summaries are rewritten.
+PROMPT_ID = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:12]
 
 RESPONSE_FORMAT = {
     "type": "json_schema",
