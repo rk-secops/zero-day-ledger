@@ -7,6 +7,8 @@ latest stories from five news wires (Krebs on Security, The Hacker News,
 BleepingComputer, Dark Reading, SecurityWeek), renders them into a static
 page, and deploys it to Cloudflare (Workers static assets).
 
+What's changed between versions is in [`CHANGELOG.md`](CHANGELOG.md).
+
 ## Layout
 
 ```
