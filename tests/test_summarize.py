@@ -195,7 +195,7 @@ class RenderTests(unittest.TestCase):
         page = build.render([("Wire", [a])], [], datetime(2026, 10, 23, tzinfo=timezone.utc))
         self.assertIn("Claude&#x27;s &lt;b&gt;take&lt;/b&gt;.", page)
         self.assertNotIn("Feed blurb", page)
-        self.assertIn(f"written by {ai.MODEL_NAME}", page)
+        self.assertIn("written by Claude from each article", page)
 
     def test_no_credit_without_ai_summaries(self):
         page = build.render([("Wire", [article()])], [], datetime(2026, 10, 23, tzinfo=timezone.utc))

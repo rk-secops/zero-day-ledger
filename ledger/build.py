@@ -343,7 +343,7 @@ def render(dispatches, down, built_at, kev=None, kev_recent=0):
         down_notice = f'<p class="down">No word this morning from {html.escape(", ".join(down))}.</p>'
     summary_note = ""
     if any(a.ai_summary for _, articles in dispatches for a in articles):
-        summary_note = (f'<p>Story summaries written by {ai.MODEL_NAME} from each article.<br>'
+        summary_note = ('<p>Story summaries written by Claude from each article.<br>'
                         'Follow the headline for the full report.</p>')
 
     return Template(TEMPLATE.read_text(encoding="utf-8")).substitute(

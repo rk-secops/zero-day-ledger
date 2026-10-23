@@ -20,7 +20,6 @@ from html.parser import HTMLParser
 from log import alert, warn
 
 MODEL = "claude-sonnet-5-5"
-MODEL_NAME = "Claude Sonnet 5.5"
 CACHE_URL = "https://thezerodayledger.com/summaries.json"
 
 MAX_PAGE_BYTES = 3 * 1024 * 1024

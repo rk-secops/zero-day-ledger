@@ -9,6 +9,14 @@ To get notified of new versions, watch this repository and choose
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-10-23
+
+### Fixed
+- The footer now credits summaries to Claude rather than naming Claude Sonnet
+  5.5. Summaries are requested from Sonnet 5.5, but one that trips a safety
+  filter is rerouted to another model, so naming a single model wasn't
+  always accurate.
+
 ## [1.1.0] - 2026-10-23
 
 ### Added
@@ -52,5 +60,6 @@ First edition.
 - DNSSEC, HTTPS everywhere, and a null mail setup so the domain can't be used
   to send spoofed email.
 
+[1.1.1]: https://github.com/rk-secops/zero-day-ledger/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/rk-secops/zero-day-ledger/releases/tag/v1.0.0
