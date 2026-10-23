@@ -220,6 +220,13 @@ body {
 .bulletin-facts dd.alarm { color: var(--ribbon); }
 .bulletin .meta + .meta { margin-top: 4px; }
 
+/* Story labels Claude picks from a fixed list (summarize.LABELS). */
+.labels { margin: 0 0 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+.label {
+  font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-soft); border-bottom: 1px dotted var(--ink-soft);
+}
+
 /* CVE IDs in summaries link to NVD; ones in CISA's KEV catalog get a mark. */
 .dek a.cve { color: inherit; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 2px; white-space: nowrap; }
 .dek a.cve:hover, .dek a.cve:focus-visible { color: var(--ribbon); text-decoration-color: var(--ribbon); }

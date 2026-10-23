@@ -70,6 +70,7 @@ class Article:
     published: datetime | None
     body: str = ""        # full plain text the feed carries, used as summary source
     ai_summary: str = ""  # Claude's summary, when there is one
+    ai_labels: tuple = ()  # labels Claude picked from summarize.LABELS
 
 
 @dataclass
@@ -290,6 +291,9 @@ def render_article(article, kev_ids=frozenset()):
         f'        <h3 class="headline"><a href="{e(article.url)}" target="_blank" '
         f'rel="noopener noreferrer">{e(article.title)}</a></h3>',
     ]
+    if article.ai_summary and article.ai_labels:
+        tags = "".join(f'<span class="label">{e(label)}</span>' for label in article.ai_labels)
+        lines.append(f'        <p class="labels">{tags}</p>')
     dek = article.ai_summary or article.summary
     if dek:
         lines.append(f'        <p class="dek">{link_cves(dek, kev_ids)}</p>')

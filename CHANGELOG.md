@@ -9,6 +9,18 @@ To get notified of new versions, watch this repository and choose
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-10-23
+
+### Added
+- Stories can carry up to four labels: **Ransomware**, **Data breach**,
+  **Patch available** and **Nation-state**. Claude picks them from that fixed
+  list along with the summary, and only when the article states the fact
+  outright; many stories get none.
+
+### Changed
+- `summaries.json` now stores each story's labels next to its summary.
+  Summaries saved before labels existed are written once more to pick them up.
+
 ## [1.2.0] - 2026-10-23
 
 ### Added
@@ -68,6 +80,7 @@ First edition.
 - DNSSEC, HTTPS everywhere, and a null mail setup so the domain can't be used
   to send spoofed email.
 
+[1.3.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/rk-secops/zero-day-ledger/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.0.0...v1.1.0

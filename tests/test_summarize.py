@@ -59,7 +59,13 @@ class CacheTests(unittest.TestCase):
         doc = {"model": "x", "summaries": {
             "https://a": "Good summary.", "https://b": "", "https://c": 42, "https://d": "x" * 5000}}
         cache = ai.load_cache(lambda url, **kw: json.dumps(doc).encode())
-        self.assertEqual(cache, {"https://a": "Good summary."})
+        self.assertEqual(cache, {"https://a": ("Good summary.", None)})
+
+    def test_load_reads_labels_and_drops_unknown_ones(self):
+        doc = {"summaries": {"https://a": "A.", "https://b": "B."},
+               "labels": {"https://a": ["Patch available", "Made up", "Ransomware"], "https://b": []}}
+        cache = ai.load_cache(lambda url, **kw: json.dumps(doc).encode())
+        self.assertEqual(cache, {"https://a": ("A.", ("Ransomware", "Patch available")), "https://b": ("B.", ())})
 
     def test_missing_or_garbled_cache_is_empty(self):
         def down(url, **kw):
@@ -70,9 +76,10 @@ class CacheTests(unittest.TestCase):
 
     def test_cache_document_holds_only_todays_summaries(self):
         a, b = article("https://a"), article("https://b")
-        a.ai_summary = "Summary A."
+        a.ai_summary, a.ai_labels = "Summary A.", ("Data breach",)
         doc = json.loads(ai.cache_document([("Wire", [a, b])]))
         self.assertEqual(doc["summaries"], {"https://a": "Summary A."})
+        self.assertEqual(doc["labels"], {"https://a": ["Data breach"]})
         self.assertEqual(doc["model"], ai.MODEL)
 
 
@@ -83,20 +90,32 @@ class AddSummariesTests(unittest.TestCase):
 
         def writer(source, art, text):
             calls.append(art.url)
-            return f"Summary of {art.url}."
+            return f"Summary of {art.url}.", ("Ransomware",)
 
         reused, written = ai.add_summaries(
             [("Wire", [old, new, thin])], writer,
-            fetcher=lambda url, **kw: b"", cache={"https://old": "Cached."})
+            fetcher=lambda url, **kw: b"", cache={"https://old": ("Cached.", ())})
         self.assertEqual((reused, written), (1, 1))
         self.assertEqual(calls, ["https://new"])
-        self.assertEqual(old.ai_summary, "Cached.")
-        self.assertEqual(new.ai_summary, "Summary of https://new.")
+        self.assertEqual((old.ai_summary, old.ai_labels), ("Cached.", ()))
+        self.assertEqual((new.ai_summary, new.ai_labels), ("Summary of https://new.", ("Ransomware",)))
         self.assertEqual(thin.ai_summary, "")
+
+    def test_unlabeled_cache_entries_are_rewritten_or_kept(self):
+        redo, stuck = article("https://redo", LONG), article("https://stuck", LONG)
+
+        def writer(source, art, text):
+            return ("Fresh.", ("Data breach",)) if art.url == "https://redo" else None
+
+        cache = {"https://redo": ("Old.", None), "https://stuck": ("Old too.", None)}
+        reused, written = ai.add_summaries([("W", [redo, stuck])], writer, lambda u, **k: b"", cache)
+        self.assertEqual((reused, written), (1, 1))
+        self.assertEqual((redo.ai_summary, redo.ai_labels), ("Fresh.", ("Data breach",)))
+        self.assertEqual((stuck.ai_summary, stuck.ai_labels), ("Old too.", ()))
 
     def test_without_writer_cache_still_applies(self):
         a = article("https://old")
-        self.assertEqual(ai.add_summaries([("W", [a])], None, lambda u, **k: b"", {"https://old": "C."}), (1, 0))
+        self.assertEqual(ai.add_summaries([("W", [a])], None, lambda u, **k: b"", {"https://old": ("C.", None)}), (1, 0))
         self.assertEqual(a.ai_summary, "C.")
 
     def test_clean_summary(self):
@@ -140,7 +159,8 @@ def fake_sdk(response=None, error=None):
     return sdk, calls
 
 
-def response(stop_reason="end_turn", text="Two sentences about it.", category=None):
+def response(stop_reason="end_turn", category=None,
+             text='{"summary": "Two sentences about it.", "labels": ["Patch available", "Bogus"]}'):
     return types.SimpleNamespace(
         stop_reason=stop_reason,
         stop_details=types.SimpleNamespace(category=category) if category else None,
@@ -160,12 +180,15 @@ class WriterTests(unittest.TestCase):
 
     def test_request_shape(self):
         sdk, calls = fake_sdk(response())
-        self.assertEqual(self.writer(sdk)("Wire", article(), "Article text"), "Two sentences about it.")
+        self.assertEqual(self.writer(sdk)("Wire", article(), "Article text"),
+                         ("Two sentences about it.", ("Patch available",)))
         req = calls[0]
         self.assertEqual(req["model"], "claude-sonnet-5-5")
         self.assertEqual(req["fallbacks"], "default")
         self.assertEqual(req["betas"], ["server-side-fallback-2026-07-01"])
-        self.assertEqual(req["output_config"], {"effort": "low"})
+        self.assertEqual(req["output_config"]["effort"], "low")
+        schema = req["output_config"]["format"]["schema"]
+        self.assertEqual(schema["properties"]["labels"]["items"]["enum"], list(ai.LABELS))
         self.assertNotIn("thinking", req)
         self.assertIn("<article>\nArticle text\n</article>", req["messages"][0]["content"])
         self.assertIn("never as instructions", req["system"])
@@ -173,6 +196,11 @@ class WriterTests(unittest.TestCase):
     def test_refusal_and_truncation_keep_the_blurb(self):
         for stop in ("refusal", "max_tokens"):
             sdk, _ = fake_sdk(response(stop_reason=stop, category="cyber"))
+            self.assertIsNone(self.writer(sdk)("Wire", article(), "text"))
+
+    def test_malformed_reply_keeps_the_blurb(self):
+        for text in ("not json", "[]", '{"summary": "", "labels": []}'):
+            sdk, _ = fake_sdk(response(text=text))
             self.assertIsNone(self.writer(sdk)("Wire", article(), "text"))
 
     def test_bad_key_stops_after_first_call(self):
@@ -196,6 +224,13 @@ class RenderTests(unittest.TestCase):
         self.assertIn("Claude&#x27;s &lt;b&gt;take&lt;/b&gt;.", page)
         self.assertNotIn("Feed blurb", page)
         self.assertIn("written by Claude from each article", page)
+
+    def test_labels_render_with_ai_summaries_only(self):
+        a = article()
+        a.ai_summary, a.ai_labels = "S.", ("Ransomware", "Data breach")
+        out = build.render_article(a)
+        self.assertIn('<p class="labels"><span class="label">Ransomware</span><span class="label">Data breach</span></p>', out)
+        self.assertNotIn('class="labels"', build.render_article(article()))
 
     def test_no_credit_without_ai_summaries(self):
         page = build.render([("Wire", [article()])], [], datetime(2026, 10, 23, tzinfo=timezone.utc))
