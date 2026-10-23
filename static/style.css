@@ -219,6 +219,16 @@ body {
 .bulletin-facts dd { margin: 2px 0 0; font-size: 0.86rem; font-weight: 700; }
 .bulletin-facts dd.alarm { color: var(--ribbon); }
 .bulletin .meta + .meta { margin-top: 4px; }
+
+/* CVE IDs in summaries link to NVD; ones in CISA's KEV catalog get a mark. */
+.dek a.cve { color: inherit; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 2px; white-space: nowrap; }
+.dek a.cve:hover, .dek a.cve:focus-visible { color: var(--ribbon); text-decoration-color: var(--ribbon); }
+.dek a.cve:focus-visible { outline: 2px solid var(--ribbon); outline-offset: 2px; }
+.kev {
+  display: inline-block; margin-left: 4px; padding: 0 4px; vertical-align: 0.1em;
+  font-size: 0.6rem; letter-spacing: 0.12em; text-decoration: none; cursor: help;
+  color: var(--paper); background: var(--ribbon);
+}
 .meta a { color: var(--ink-soft); }
 .meta a:hover, .meta a:focus-visible { color: var(--ribbon); }
 

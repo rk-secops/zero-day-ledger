@@ -57,6 +57,7 @@ ATOM = "{http://www.w3.org/2005/Atom}"
 CONTENT_ENCODED = "{http://purl.org/rss/1.0/modules/content/}encoded"
 TAG_RE = re.compile(r"<[^>]+>")
 CVE_RE = re.compile(r"CVE-\d{4}-\d{4,}")
+CVE_IN_TEXT_RE = re.compile(r"\bCVE-\d{4}-\d{4,}\b", re.IGNORECASE)
 CWE_RE = re.compile(r"CWE-(\d+)")
 EPOCH = datetime.min.replace(tzinfo=timezone.utc)
 
@@ -221,12 +222,17 @@ def fetch(url, timeout=15, max_bytes=MAX_FEED_BYTES):
 
 
 def todays_kev(today, fetcher=fetch):
-    """(Kev, recent count), or (None, 0) if CISA's feed is unavailable."""
+    """(Kev, recent count, every CVE ID in the catalog).
+
+    Returns (None, 0, frozenset()) if CISA's feed is unavailable.
+    """
     try:
-        return pick_kev(parse_kev(fetcher(KEV_URL, max_bytes=MAX_KEV_BYTES)), today)
+        entries = parse_kev(fetcher(KEV_URL, max_bytes=MAX_KEV_BYTES))
     except Exception as exc:  # the paper still prints without the bulletin
         alert(f"CISA KEV feed unavailable ({exc}); printing without CVE of the Day.")
-        return None, 0
+        return None, 0, frozenset()
+    kev, recent = pick_kev(entries, today)
+    return kev, recent, frozenset(e.cve for e in entries)
 
 
 def gather(feeds, per_wire, fetcher=fetch):
@@ -260,7 +266,24 @@ def gather(feeds, per_wire, fetcher=fetch):
 
 # --- Rendering ---------------------------------------------------------------
 
-def render_article(article):
+def link_cves(text, kev_ids):
+    """Escape text and link each CVE ID in it to NVD.
+
+    IDs in CISA's Known Exploited Vulnerabilities catalog get a KEV mark, so
+    the flag always comes from CISA's list, never from the summary itself.
+    """
+    def cve_link(match):
+        cve = match.group(0).upper()
+        link = (f'<a class="cve" href="https://nvd.nist.gov/vuln/detail/{cve}" '
+                f'target="_blank" rel="noopener noreferrer">{cve}</a>')
+        if cve in kev_ids:
+            link += ('<abbr class="kev" title="In CISA&rsquo;s Known Exploited '
+                     'Vulnerabilities catalog">KEV</abbr>')
+        return link
+    return CVE_IN_TEXT_RE.sub(cve_link, html.escape(text))
+
+
+def render_article(article, kev_ids=frozenset()):
     e = html.escape
     lines = [
         '      <article class="article">',
@@ -269,7 +292,7 @@ def render_article(article):
     ]
     dek = article.ai_summary or article.summary
     if dek:
-        lines.append(f'        <p class="dek">{e(dek)}</p>')
+        lines.append(f'        <p class="dek">{link_cves(dek, kev_ids)}</p>')
     if article.published:
         lines.append(f'        <p class="meta"><time datetime="{article.published.isoformat()}">'
                      f'{article.published:%b %d, %Y}</time></p>')
@@ -277,8 +300,8 @@ def render_article(article):
     return "\n".join(lines)
 
 
-def render_dispatch(number, source, articles):
-    body = "\n".join(render_article(a) for a in articles)
+def render_dispatch(number, source, articles, kev_ids=frozenset()):
+    body = "\n".join(render_article(a, kev_ids) for a in articles)
     return (
         f'    <section class="dispatch" aria-labelledby="wire-{number}">\n'
         f'      <div class="dispatch-head">\n'
@@ -335,7 +358,7 @@ def render_kev(kev, recent_count):
     )
 
 
-def render(dispatches, down, built_at, kev=None, kev_recent=0):
+def render(dispatches, down, built_at, kev=None, kev_recent=0, kev_ids=frozenset()):
     total = len(dispatches) + len(down)
     status = f"All {total} wires live" if not down else f"{len(dispatches)} of {total} wires live"
     down_notice = ""
@@ -356,7 +379,7 @@ def render(dispatches, down, built_at, kev=None, kev_recent=0):
         down_notice=down_notice,
         summary_note=summary_note,
         kev=render_kev(kev, kev_recent),
-        dispatches="\n".join(render_dispatch(i, s, a) for i, (s, a) in enumerate(dispatches, 1)),
+        dispatches="\n".join(render_dispatch(i, s, a, kev_ids) for i, (s, a) in enumerate(dispatches, 1)),
     )
 
 
@@ -380,7 +403,7 @@ def main():
         sys.exit(1)
 
     built_at = datetime.now(timezone.utc)
-    kev, kev_recent = todays_kev(built_at.date())
+    kev, kev_recent, kev_ids = todays_kev(built_at.date())
 
     reused = written = 0
     if not args.no_summaries:
@@ -389,7 +412,7 @@ def main():
             alert("No ANTHROPIC_API_KEY: reusing published summaries only.")
         reused, written = ai.add_summaries(dispatches, writer, fetch, ai.load_cache(fetch))
 
-    page = render(dispatches, down, built_at, kev, kev_recent)
+    page = render(dispatches, down, built_at, kev, kev_recent, kev_ids)
     write_site(page, ai.cache_document(dispatches), args.out)
     stories = sum(len(a) for _, a in dispatches)
     print(f"Printed {stories} stories from {len(dispatches)} wires to {args.out}"

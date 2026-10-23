@@ -125,7 +125,7 @@ class KevTests(unittest.TestCase):
     def test_feed_outage_is_not_fatal(self):
         def broken(url, **kwargs):
             raise OSError("timed out")
-        self.assertEqual(build.todays_kev(date(2026, 10, 22), broken), (None, 0))
+        self.assertEqual(build.todays_kev(date(2026, 10, 22), broken), (None, 0, frozenset()))
 
     def test_render_bulletin(self):
         html_out = build.render_kev(self.entries["CVE-2026-1111"], 3)
@@ -139,6 +139,18 @@ class KevTests(unittest.TestCase):
 
 
 class RenderTests(unittest.TestCase):
+    def test_cves_in_summaries_link_to_nvd_and_flag_kev(self):
+        story = build.Article(
+            title="t", url="https://example.com/a", published=None,
+            summary="Patch cve-2026-1111 and CVE-2026-22222 <now>; CVE-2026-1 is not an ID.",
+        )
+        out = build.render_article(story, frozenset({"CVE-2026-1111"}))
+        self.assertIn('href="https://nvd.nist.gov/vuln/detail/CVE-2026-1111"', out)
+        self.assertIn('>CVE-2026-1111</a><abbr class="kev"', out)
+        self.assertIn('>CVE-2026-22222</a> &lt;now&gt;', out)
+        self.assertEqual(out.count('class="kev"'), 1)
+        self.assertNotIn("detail/CVE-2026-1\"", out)
+
     def test_markup_in_feeds_is_escaped(self):
         evil = build.Article(
             title='</script><img src=x onerror="alert(1)">',

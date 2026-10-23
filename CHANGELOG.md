@@ -9,6 +9,14 @@ To get notified of new versions, watch this repository and choose
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-10-23
+
+### Added
+- CVE IDs in story summaries now link to their NVD entries.
+- CVEs in CISA's Known Exploited Vulnerabilities catalog carry a red **KEV**
+  mark. The mark comes from CISA's catalog, not from the summary, so it only
+  appears once CISA has confirmed exploitation.
+
 ## [1.1.1] - 2026-10-23
 
 ### Fixed
@@ -60,6 +68,7 @@ First edition.
 - DNSSEC, HTTPS everywhere, and a null mail setup so the domain can't be used
   to send spoofed email.
 
+[1.2.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/rk-secops/zero-day-ledger/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/rk-secops/zero-day-ledger/releases/tag/v1.0.0
