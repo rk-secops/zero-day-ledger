@@ -19,6 +19,7 @@ static/                copied into dist/ as-is: CSS, typewriter JS, favicon,
 tools/watchdog.py      checks the live site matches what this repo deploys
 tests/                 offline unit tests (no network)
 wrangler.jsonc         Cloudflare config: serve dist/ as static assets
+package.json           pins the Wrangler CLI; package-lock.json hash-locks it
 .github/workflows/     test, then build and deploy on a daily schedule
 ```
 
@@ -91,7 +92,8 @@ The site is served at **https://thezerodayledger.com** (set in `wrangler.jsonc`)
 8. Optional: send `www.` to the apex with **Rules -> Redirect Rules ->
    Redirect from WWW to root** (needs a proxied `www` DNS record).
 
-You can also deploy by hand: `python3 ledger/build.py && npx wrangler deploy`.
+You can also deploy by hand: `npm ci --ignore-scripts`, then
+`python3 ledger/build.py && npx wrangler deploy`.
 
 Change the time with the `cron:` line in `.github/workflows/press.yml`, and the
 wires with `FEEDS` in `ledger/build.py`.

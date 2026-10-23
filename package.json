@@ -1,0 +1,8 @@
+{
+  "name": "zero-day-ledger-deploy",
+  "private": true,
+  "description": "Pins the Wrangler CLI used by the deploy job; package-lock.json holds an integrity hash for every package.",
+  "devDependencies": {
+    "wrangler": "4.152.0"
+  }
+}

@@ -9,6 +9,14 @@ To get notified of new versions, watch this repository and choose
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.2] - 2026-10-23
+
+### Security
+- The deploy job installs Wrangler from a lockfile that pins it and every
+  package under it by integrity hash, with install scripts disabled.
+  Previously Wrangler's own dependencies were resolved fresh from npm in the
+  job that holds the Cloudflare token. Dependabot now tracks Wrangler too.
+
 ## [1.3.1] - 2026-10-23
 
 ### Fixed
@@ -88,6 +96,7 @@ First edition.
 - DNSSEC, HTTPS everywhere, and a null mail setup so the domain can't be used
   to send spoofed email.
 
+[1.3.2]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.1.1...v1.2.0

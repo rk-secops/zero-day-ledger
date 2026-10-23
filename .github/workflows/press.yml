@@ -50,12 +50,16 @@ jobs:
           # keeps the feed blurbs.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python3 ledger/build.py
+      - name: Install Wrangler (hash-verified)
+        # package-lock.json pins Wrangler and every package under it by integrity
+        # hash; --ignore-scripts keeps install hooks out of the job that holds
+        # the Cloudflare token.
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Exact version: the action defaults to Wrangler 3 (no assets-only Workers),
-          # and a floating "4" would pull whatever npm serves that morning.
-          wranglerVersion: "4.152.0"
+          # No wranglerVersion: the action uses the Wrangler installed above, so
+          # the version lives in package.json and Dependabot keeps it current.
           command: deploy

@@ -1,5 +1,4 @@
-# Weekly PRs to bump the pinned action SHAs and the anthropic SDK.
-# (wranglerVersion in press.yml is an npm version string; bump it by hand.)
+# Weekly PRs to bump the pinned action SHAs, the anthropic SDK and Wrangler.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -10,6 +9,10 @@ updates:
       actions:
         patterns: ["*"]
   - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
