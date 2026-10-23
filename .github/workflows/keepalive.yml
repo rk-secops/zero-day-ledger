@@ -9,12 +9,13 @@ on:
     - cron: "23 9 1 * *"
   workflow_dispatch: {}
 
-permissions:
-  actions: write
+permissions: {}
 
 jobs:
   keepalive:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Re-enable scheduled workflows
         env:
