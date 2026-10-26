@@ -3,6 +3,6 @@
   "private": true,
   "description": "Pins the Wrangler CLI used by the deploy job; package-lock.json holds an integrity hash for every package.",
   "devDependencies": {
-    "wrangler": "4.152.0"
+    "wrangler": "4.153.0"
   }
 }

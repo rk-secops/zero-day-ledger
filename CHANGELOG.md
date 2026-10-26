@@ -9,6 +9,15 @@ To get notified of new versions, watch this repository and choose
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.3] - 2026-10-26
+
+### Security
+- The deploy job now uses Wrangler 4.153.0, which brings in undici 7.30.1.
+  It fixes two denial-of-service bugs and a Subresource Integrity bypass
+  (GHSA-4qv8-2p9j-2685, GHSA-f72v-6w45-q472, GHSA-xjj6-f33q-929c). The
+  affected code runs only during deploys, when Wrangler talks to Cloudflare's
+  API; nothing on the site itself used it.
+
 ## [1.3.2] - 2026-10-23
 
 ### Security
@@ -96,6 +105,7 @@ First edition.
 - DNSSEC, HTTPS everywhere, and a null mail setup so the domain can't be used
   to send spoofed email.
 
+[1.3.3]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.2.0...v1.3.0
