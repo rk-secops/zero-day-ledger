@@ -14,6 +14,7 @@
 <link rel="preload" href="fonts/special-elite-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/courier-prime-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
+<script src="display.js"></script>
 <script src="typewriter.js" defer></script>
 <script src="fresh.js" defer></script>
 <script src="keys.js" defer></script>
@@ -33,6 +34,7 @@
     <hr class="masthead-rule">
     <div class="dateline">
       <time datetime="$built_iso">$built_date</time>
+      <button class="display-toggle" type="button" id="display" hidden>Display: Paper</button>
       <span>$wire_status</span>
     </div>
     <details class="guide" id="guide">
@@ -42,6 +44,7 @@
         <dl class="guide-keys">
           <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>Next or previous story</dd></div>
           <div><dt><kbd>o</kbd></dt><dd>Open the story</dd></div>
+          <div><dt><kbd>p</kbd></dt><dd>Paper, green or amber display</dd></div>
           <div><dt><kbd>?</kbd></dt><dd>Open or close this guide</dd></div>
           <div><dt><kbd>Esc</kbd></dt><dd>Close it</dd></div>
         </dl>

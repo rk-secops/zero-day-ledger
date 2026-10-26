@@ -9,6 +9,13 @@ To get notified of new versions, watch this repository and choose
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-10-26
+
+### Added
+- Phosphor mode: a "Display" switch in the date line turns the paper into a
+  green or amber terminal screen, scanlines and all. Press `p` to switch
+  from the keyboard. Your choice is remembered in this browser only.
+
 ## [1.4.0] - 2026-10-26
 
 ### Added
@@ -115,6 +122,7 @@ First edition.
 - DNSSEC, HTTPS everywhere, and a null mail setup so the domain can't be used
   to send spoofed email.
 
+[1.5.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.3...v1.4.0
 [1.3.3]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.1...v1.3.2

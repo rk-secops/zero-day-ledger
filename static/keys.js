@@ -1,6 +1,7 @@
 // Keyboard shortcuts: j / k step through the stories, o opens the current one,
-// ? opens or closes the reader's guide, Esc closes it. Nothing is stored, and
-// the page works the same without this script.
+// p switches the display (display.js), ? opens or closes the reader's guide,
+// Esc closes it. This script stores nothing, and the page works the same
+// without it.
 (function () {
   "use strict";
 
@@ -65,6 +66,11 @@
       case "j": step(1); break;
       case "k": step(-1); break;
       case "o": if (articles[current]) link(articles[current]).click(); break;
+      case "p":
+        var display = document.getElementById("display");
+        if (!display || display.hidden) return;
+        display.click();
+        break;
       case "?": toggleGuide(!(guide && guide.open)); break;
       case "Escape":
         if (!guide || !guide.open) return;

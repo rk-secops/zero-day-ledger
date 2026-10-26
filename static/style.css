@@ -75,6 +75,8 @@
   --rule: #c9bb9e;
   --grain-blend: multiply;
   --grain-opacity: 0.05;
+  --glow: none;
+  --scan-opacity: 0;
 
   --font-display: 'Special Elite', 'Courier New', monospace;
   --font-mono: 'Courier Prime', 'Courier New', monospace;
@@ -103,6 +105,32 @@
   --grain-opacity: 0.08;
   color-scheme: dark;
 }
+/* Phosphor display modes (display.js). After the theme blocks, so a reader's
+   choice wins over both light and dark. */
+:root[data-phosphor="green"] {
+  --paper: #08110a;
+  --ink: #8dfc9f;
+  --ink-soft: #52b567;
+  --ribbon: #d2ffd9;
+  --rule: #1d3a24;
+  --glow: 0 0 5px rgba(141, 252, 159, 0.45);
+  --grain-blend: overlay;
+  --grain-opacity: 0.1;
+  --scan-opacity: 1;
+  color-scheme: dark;
+}
+:root[data-phosphor="amber"] {
+  --paper: #130c03;
+  --ink: #ffb547;
+  --ink-soft: #c0812a;
+  --ribbon: #ffdca3;
+  --rule: #3f2b0f;
+  --glow: 0 0 5px rgba(255, 181, 71, 0.45);
+  --grain-blend: overlay;
+  --grain-opacity: 0.1;
+  --scan-opacity: 1;
+  color-scheme: dark;
+}
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -110,6 +138,7 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-mono);
+  text-shadow: var(--glow);
   padding: 28px max(16px, env(safe-area-inset-right)) 64px max(16px, env(safe-area-inset-left));
 }
 
@@ -292,4 +321,20 @@ kbd {
 .article.current::before {
   content: "\25B8"; position: absolute; left: -15px; top: 0.1em;
   color: var(--ribbon); font-size: 0.95rem;
+}
+
+/* Display switch in the dateline, and the phosphor screen's scanlines. */
+.display-toggle {
+  cursor: pointer; background: none; border: none; padding: 0;
+  font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink-soft);
+  border-bottom: 1px dotted var(--ink-soft);
+}
+.display-toggle[hidden] { display: none; }
+.display-toggle:hover { color: var(--ribbon); border-bottom-color: var(--ribbon); }
+.display-toggle:focus-visible { outline: 2px solid var(--ribbon); outline-offset: 2px; }
+.dispatch-label, .kev { text-shadow: none; }
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  opacity: var(--scan-opacity);
+  background: repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0, 0, 0, 0.22) 2px 3px);
 }
