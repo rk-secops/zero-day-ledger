@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="style.css">
 <script src="typewriter.js" defer></script>
 <script src="fresh.js" defer></script>
+<script src="keys.js" defer></script>
 </head>
 <body>
 
@@ -34,6 +35,27 @@
       <time datetime="$built_iso">$built_date</time>
       <span>$wire_status</span>
     </div>
+    <details class="guide" id="guide">
+      <summary>How to read the Ledger</summary>
+      <div class="guide-body">
+        <h2 class="guide-head">Keyboard</h2>
+        <dl class="guide-keys">
+          <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>Next or previous story</dd></div>
+          <div><dt><kbd>o</kbd></dt><dd>Open the story</dd></div>
+          <div><dt><kbd>?</kbd></dt><dd>Open or close this guide</dd></div>
+          <div><dt><kbd>Esc</kbd></dt><dd>Close it</dd></div>
+        </dl>
+        <h2 class="guide-head">Marks</h2>
+        <dl class="guide-marks">
+          <div><dt><span class="fresh">New</span></dt><dd>Not on the page at your last visit. Only this browser remembers what you&rsquo;ve seen.</dd></div>
+          <div><dt><abbr class="kev" title="In CISA&rsquo;s Known Exploited Vulnerabilities catalog">KEV</abbr></dt><dd>CISA has confirmed attackers are exploiting this CVE. CVE numbers link to their NVD entry.</dd></div>
+          <div><dt><span class="label">Patch available</span></dt><dd>Labels come from a short list: Ransomware, Data breach, Patch available and Nation-state. A story only gets one when it clearly fits.</dd></div>
+        </dl>
+        <h2 class="guide-head">The paper</h2>
+        <p>The CVE of the Day comes from CISA&rsquo;s Known Exploited Vulnerabilities catalog, rotating through what was added in the past week.</p>
+        $guide_summaries
+      </div>
+    </details>
   </header>
 
   <main>

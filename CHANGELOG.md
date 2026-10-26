@@ -9,6 +9,16 @@ To get notified of new versions, watch this repository and choose
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-10-26
+
+### Added
+- Keyboard shortcuts: `j` and `k` step through the stories, `o` opens the
+  current one, and `?` opens a short guide.
+- "How to read the Ledger", a fold-out guide under the date line. It lists
+  the shortcuts and explains the NEW stamp, the KEV mark, the story labels
+  and where the CVE of the Day comes from. The page still opens on the
+  masthead; the guide stays closed until you ask for it.
+
 ## [1.3.3] - 2026-10-26
 
 ### Security
@@ -105,6 +115,7 @@ First edition.
 - DNSSEC, HTTPS everywhere, and a null mail setup so the domain can't be used
   to send spoofed email.
 
+[1.4.0]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.3...v1.4.0
 [1.3.3]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/rk-secops/zero-day-ledger/compare/v1.3.0...v1.3.1

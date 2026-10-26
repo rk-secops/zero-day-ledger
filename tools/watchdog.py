@@ -31,7 +31,7 @@ MAX_EDITION_AGE = timedelta(hours=36)  # daily press run plus slack for one retr
 MIN_STORIES = 5
 CERT_MIN_DAYS = 14
 SECURITY_TXT_MIN_DAYS = 30
-ALLOWED_SCRIPTS = {"typewriter.js", "fresh.js"}
+ALLOWED_SCRIPTS = {"typewriter.js", "fresh.js", "keys.js"}
 
 
 # --- Fetching ----------------------------------------------------------------

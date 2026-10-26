@@ -14,7 +14,7 @@ What's changed between versions is in [`CHANGELOG.md`](CHANGELOG.md).
 ```
 ledger/build.py       fetch feeds -> parse -> render -> dist/
 ledger/template.html  page skeleton ($placeholders filled by build.py)
-static/                copied into dist/ as-is: CSS, typewriter JS, favicon,
+static/                copied into dist/ as-is: CSS, page scripts, favicon,
                        _headers (security headers + caching)
 tools/watchdog.py      checks the live site matches what this repo deploys
 tests/                 offline unit tests (no network)

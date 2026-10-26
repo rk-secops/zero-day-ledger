@@ -250,3 +250,46 @@ body {
 }
 .colophon .down { font-style: italic; }
 .colophon .stamp { font-family: var(--font-display); color: var(--ribbon); }
+
+/* Reader's guide: a closed dropdown under the dateline (keys.js opens it on ?). */
+.guide { margin-top: 10px; }
+.guide > summary {
+  display: inline-block; cursor: pointer; list-style: none;
+  font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-soft); border-bottom: 1px dotted var(--ink-soft);
+}
+.guide > summary::-webkit-details-marker { display: none; }
+.guide > summary::before { content: "\25B8\00a0"; }
+.guide[open] > summary::before { content: "\25BE\00a0"; }
+.guide > summary:hover { color: var(--ribbon); border-bottom-color: var(--ribbon); }
+.guide > summary:focus-visible { outline: 2px solid var(--ribbon); outline-offset: 2px; }
+.guide-body {
+  margin-top: 12px; padding: 4px 18px 16px; text-align: left;
+  border: 1px dashed var(--ink-soft);
+  font-size: 0.82rem; line-height: 1.55;
+}
+.guide-body p { margin: 0 0 8px; max-width: 65ch; }
+.guide-head {
+  margin: 14px 0 8px; font-family: var(--font-mono); font-weight: 700;
+  font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
+}
+.guide-keys, .guide-marks { margin: 0; display: grid; gap: 8px; }
+.guide-keys > div, .guide-marks > div { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.guide-keys dd, .guide-marks dd { margin: 0; }
+.guide-marks dt .fresh { margin-right: 0; }
+.guide-marks dt .kev { margin-left: 0; }
+kbd {
+  display: inline-block; min-width: 1.6em; padding: 0 5px; text-align: center;
+  font-family: var(--font-mono); font-size: 0.78rem;
+  border: 1px solid var(--ink-soft); border-bottom-width: 2px;
+}
+@media (max-width: 420px) {
+  .guide-keys > div, .guide-marks > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
+
+/* Current story while stepping through with j / k (keys.js). */
+.article { position: relative; }
+.article.current::before {
+  content: "\25B8"; position: absolute; left: -15px; top: 0.1em;
+  color: var(--ribbon); font-size: 0.95rem;
+}

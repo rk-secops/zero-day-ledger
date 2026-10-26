@@ -1,5 +1,6 @@
 """Offline tests for tools/watchdog.py's checks."""
 
+import re
 import sys
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -38,6 +39,12 @@ class HeaderTests(unittest.TestCase):
 class PageTests(unittest.TestCase):
     def test_healthy_page(self):
         self.assertEqual(watchdog.check_page(page(), NOW), [])
+
+    def test_all_page_scripts_allowed(self):
+        template = (ROOT / "ledger" / "template.html").read_text()
+        scripts = ''.join(re.findall(r'<script\b[^>]*></script>', template))
+        self.assertEqual(scripts.count("<script"), len(watchdog.ALLOWED_SCRIPTS))
+        self.assertEqual(watchdog.check_page(page(extra=scripts), NOW), [])
 
     def test_injected_script_and_iframe(self):
         problems = watchdog.check_page(page(extra='<script src="https://evil.example/x.js"></script>'

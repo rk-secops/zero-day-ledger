@@ -368,10 +368,13 @@ def render(dispatches, down, built_at, kev=None, kev_recent=0, kev_ids=frozenset
     down_notice = ""
     if down:
         down_notice = f'<p class="down">No word this morning from {html.escape(", ".join(down))}.</p>'
-    summary_note = ""
+    summary_note = guide_summaries = ""
     if any(a.ai_summary for _, articles in dispatches for a in articles):
         summary_note = ('<p>Story summaries written by Claude from each article.<br>'
                         'Follow the headline for the full report.</p>')
+        guide_summaries = ('<p>Story summaries are written by Claude from each article. If a site '
+                           'won&rsquo;t let us read the article, you get the wire&rsquo;s own blurb '
+                           'instead. Follow the headline for the full report.</p>')
 
     return Template(TEMPLATE.read_text(encoding="utf-8")).substitute(
         issue=max(1, (built_at.date() - FIRST_EDITION).days + 1),
@@ -382,6 +385,7 @@ def render(dispatches, down, built_at, kev=None, kev_recent=0, kev_ids=frozenset
         wire_status=status,
         down_notice=down_notice,
         summary_note=summary_note,
+        guide_summaries=guide_summaries,
         kev=render_kev(kev, kev_recent),
         dispatches="\n".join(render_dispatch(i, s, a, kev_ids) for i, (s, a) in enumerate(dispatches, 1)),
     )

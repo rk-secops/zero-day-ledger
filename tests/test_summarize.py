@@ -230,6 +230,7 @@ class RenderTests(unittest.TestCase):
         self.assertIn("Claude&#x27;s &lt;b&gt;take&lt;/b&gt;.", page)
         self.assertNotIn("Feed blurb", page)
         self.assertIn("written by Claude from each article", page)
+        self.assertIn("summaries are written by Claude", page)
 
     def test_labels_render_with_ai_summaries_only(self):
         a = article()
