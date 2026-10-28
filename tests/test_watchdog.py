@@ -42,7 +42,7 @@ class PageTests(unittest.TestCase):
 
     def test_all_page_scripts_allowed(self):
         template = (ROOT / "ledger" / "template.html").read_text()
-        scripts = ''.join(re.findall(r'<script\b[^>]*></script>', template))
+        scripts = ''.join(re.findall(r'<script\b[^>]*></script\b[^>]*>', template, re.IGNORECASE))
         self.assertEqual(scripts.count("<script"), len(watchdog.ALLOWED_SCRIPTS))
         self.assertEqual(watchdog.check_page(page(extra=scripts), NOW), [])
 
